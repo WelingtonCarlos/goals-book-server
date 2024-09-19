@@ -1,7 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CreateGoalDto } from './dto/create-goal.dto';
-import { UpdateGoalDto } from './dto/update-goal.dto';
 import { GoalService } from './goal.service';
 
 @Controller('goal')
@@ -10,34 +9,19 @@ export class GoalController {
 
   @UseGuards(AuthGuard)
   @Post()
-  create(@Body() createGoalDto: CreateGoalDto) {
-    return this.goalService.create(createGoalDto);
+  create(@Body() createGoalDto: CreateGoalDto, @Request() req: any) {
+    return this.goalService.create(createGoalDto, req);
   }
 
   @UseGuards(AuthGuard)
   @Get()
-  findGoals() {
-    return this.goalService.findGoals();
+  findGoals(@Request() req: any) {
+    return this.goalService.findGoals(req);
   }
 
   @UseGuards(AuthGuard)
   @Get('pending')
-  findPendingGoals() {
-    return this.goalService.findPendingGoals();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.goalService.findOne(+id);
-  }
-
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateGoalDto: UpdateGoalDto) {
-    return this.goalService.update(+id, updateGoalDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.goalService.remove(+id);
+  findPendingGoals(@Request() req: any) {
+    return this.goalService.findPendingGoals(req);
   }
 }

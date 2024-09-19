@@ -21,7 +21,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  goals Goal[] @relation("UserGoals")
+  goals          Goal[]           @relation("UserGoals")
+  GoalCompletion GoalCompletion[] @relation("UserGoalCompletions")
 }
 
 model Goal {
@@ -40,8 +41,10 @@ model Goal {
 model GoalCompletion {
   id        Int      @id @default(autoincrement())
   goalId    Int
+  userId    Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user User @relation("UserGoalCompletions", fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -4,9 +4,10 @@ import { DatabaseModule } from './database/database.module';
 import { UserModule } from './user/user.module';
 import { GoalModule } from './goal/goal.module';
 import { CompletionModule } from './completion/completion.module';
+import { SummaryModule } from './summary/summary.module';
 
 @Module({
-  imports: [AuthModule, UserModule, DatabaseModule, GoalModule, CompletionModule],
+  imports: [AuthModule, UserModule, DatabaseModule, GoalModule, CompletionModule, SummaryModule],
   controllers: [],
   providers: [],
 })

@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import * as dayjs from 'dayjs';
 import { PrismaService } from 'src/database/prisma.service';
 import { CreateGoalDto } from './dto/create-goal.dto';
-import { UpdateGoalDto } from './dto/update-goal.dto';
 
 @Injectable()
 export class GoalService {
@@ -10,19 +9,19 @@ export class GoalService {
   @Inject()
   private readonly prismaService: PrismaService;
 
-  create(createGoalDto: CreateGoalDto) {
-    const userId = 1; // Assumindo que o userId vem de algum lugar fixo, substitua conforme necessário.
+  async create(createGoalDto: CreateGoalDto, req: any) {
     return this.prismaService.goal.create({
-      data: { ...createGoalDto, userId }
+      data: { ...createGoalDto, userId: req.sub.sub }
     });
   }
 
-  async findGoals() {
+  async findGoals(req: any) {
     const firstDayOfWeek = dayjs().startOf('week').toDate();
     const lastDayOfWeek = dayjs().endOf('week').toDate();
 
     const goalsCreatedUpToWeek = await this.prismaService.goal.findMany({
       where: {
+        userId: req.sub.sub,
         createdAt: {
           lte: lastDayOfWeek,
         },
@@ -33,11 +32,17 @@ export class GoalService {
         desiredWeeklyFrequency: true,
         createdAt: true,
       },
+      orderBy: {
+        id: 'asc'
+      }
     });
 
     const goalCompletionCounts = await this.prismaService.goalCompletion.groupBy({
       by: ['goalId'],
       where: {
+        goal: {
+          userId: req.sub.sub,
+        },
         createdAt: {
           gte: firstDayOfWeek,
           lte: lastDayOfWeek,
@@ -60,12 +65,13 @@ export class GoalService {
     });
   }
 
-  async findPendingGoals() {
+  async findPendingGoals(req: any) {
     const firstDayOfWeek = dayjs().startOf('week').toDate();
     const lastDayOfWeek = dayjs().endOf('week').toDate();
 
     const goalsCreatedUpToWeek = await this.prismaService.goal.findMany({
       where: {
+        userId: req.sub.sub,
         createdAt: {
           lte: lastDayOfWeek,
         },
@@ -76,11 +82,17 @@ export class GoalService {
         desiredWeeklyFrequency: true,
         createdAt: true,
       },
+      orderBy: {
+        id: 'asc'
+      }
     });
 
     const goalCompletionCounts = await this.prismaService.goalCompletion.groupBy({
       by: ['goalId'],
       where: {
+        goal: {
+          userId: req.sub.sub,
+        },
         createdAt: {
           gte: firstDayOfWeek,
           lte: lastDayOfWeek,
@@ -102,15 +114,4 @@ export class GoalService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} goal`;
-  }
-
-  update(id: number, updateGoalDto: UpdateGoalDto) {
-    return `This action updates a #${id} goal`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} goal`;
-  }
 }

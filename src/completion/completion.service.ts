@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import * as dayjs from 'dayjs';
 import { PrismaService } from 'src/database/prisma.service'; // Certifique-se de que PrismaService está configurado corretamente
 import { CreateCompletionDto } from './dto/create-completion.dto';
@@ -7,11 +7,25 @@ import { CreateCompletionDto } from './dto/create-completion.dto';
 export class CompletionService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async create(createCompletionDto: CreateCompletionDto) {
+  async create(createCompletionDto: CreateCompletionDto, req: any) {
     const goalId = Number(createCompletionDto.goalId);
+    const userId = req.sub.sub;
 
     if (isNaN(goalId)) {
       throw new BadRequestException('ID da meta inválido');
+    }
+
+    const goal = await this.prisma.goal.findUnique({
+      where: { id: goalId },
+      select: { userId: true, desiredWeeklyFrequency: true },
+    });
+
+    if (!goal) {
+      throw new BadRequestException('Meta não encontrada');
+    }
+
+    if (goal.userId !== userId) {
+      throw new ForbiddenException('Você não tem permissão para completar esta meta');
     }
 
     const firstDayOfWeek = dayjs().startOf('week').toDate();
@@ -31,20 +45,6 @@ export class CompletionService {
       },
     });
 
-    // Buscar a meta e sua frequência desejada
-    const goal = await this.prisma.goal.findUnique({
-      where: {
-        id: goalId,
-      },
-      select: {
-        desiredWeeklyFrequency: true,
-      },
-    });
-
-    if (!goal) {
-      throw new BadRequestException('Meta não encontrada');
-    }
-
     const completionCount = goalCompletionCounts._count.id || 0;
 
     // Verificar se a meta já foi concluída na frequência desejada
@@ -56,25 +56,37 @@ export class CompletionService {
     const goalCompletion = await this.prisma.goalCompletion.create({
       data: {
         goalId,
+        userId
       },
     });
 
     return { goalCompletion };
   }
 
-  // findAll() {
-  //   return `This action returns all completion`;
-  // }
+  async remove(id: number, req: any) {
 
-  // findOne(id: number) {
-  //   return `This action returns a #${id} completion`;
-  // }
+    const userId = req.sub.sub;
 
-  // update(id: number, updateCompletionDto: UpdateCompletionDto) {
-  //   return `This action updates a #${id} completion`;
-  // }
+    const completion = await this.prisma.goalCompletion.findUnique({
+      where: { id },
+      select: { goal: { select: { userId: true } } },
+    });
 
-  // remove(id: number) {
-  //   return `This action removes a #${id} completion`;
-  // }
+    if (!completion) {
+      throw new BadRequestException('Conclusão de meta não encontrada');
+    }
+
+    if (completion.goal.userId !== userId) {
+      throw new ForbiddenException('Você não tem permissão para remover esta conclusão');
+    }
+
+    // Remover a conclusão de meta
+    await this.prisma.goalCompletion.delete({
+      where: { id },
+    });
+
+    return { message: 'Conclusão desfeita com sucesso' };
+  }
+
 }
+
