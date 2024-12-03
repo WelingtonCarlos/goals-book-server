@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Request, UseGuards } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { UserService } from './user.service';
@@ -16,13 +16,13 @@ export class UserController {
 
     @UseGuards(AuthGuard)
     @Get(':id')
-    async getUsers(@Param('id') id: string): Promise<User> {
+    async getUser(@Param('id') id: string): Promise<User> {
         return this.userService.user({ id: Number(id) });
     }
 
     @UseGuards(AuthGuard)
     @Get()
-    async getUser(): Promise<User[]> {
+    async getUsers(): Promise<User[]> {
         return this.userService.users({
             where: {},
             orderBy: { createdAt: 'asc' }
@@ -33,20 +33,23 @@ export class UserController {
     @Put(':id')
     async updateUser(
         @Body() userData: Prisma.UserUpdateInput,
-        @Param('id') id: string
+        @Param('id') id: string,
+        @Request() req: any,
     ): Promise<User> {
         return this.userService.updateUser({
             where: { id: Number(id) },
-            data: userData
+            data: userData,
+            req
         });
     }
 
     @UseGuards(AuthGuard)
     @Delete(':id')
     async deleteUser(
-        @Param('id') id: string
+        @Param('id') id: string,
+        @Request() req: any,
     ): Promise<User> {
-        return this.userService.deleteUser({ id: Number(id) })
+        return this.userService.deleteUser({ where: { id: Number(id) }, req })
     }
 
 }

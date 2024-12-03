@@ -5,13 +5,12 @@ import { CreateGoalDto } from './dto/create-goal.dto';
 
 @Injectable()
 export class GoalService {
-
   @Inject()
   private readonly prismaService: PrismaService;
 
   async create(createGoalDto: CreateGoalDto, req: any) {
     return this.prismaService.goal.create({
-      data: { ...createGoalDto, userId: req.sub.sub }
+      data: { ...createGoalDto, userId: req.sub.sub },
     });
   }
 
@@ -33,28 +32,36 @@ export class GoalService {
         createdAt: true,
       },
       orderBy: {
-        id: 'asc'
-      }
-    });
-
-    const goalCompletionCounts = await this.prismaService.goalCompletion.groupBy({
-      by: ['goalId'],
-      where: {
-        goal: {
-          userId: req.sub.sub,
-        },
-        createdAt: {
-          gte: firstDayOfWeek,
-          lte: lastDayOfWeek,
-        },
-      },
-      _count: {
-        id: true,
+        id: 'asc',
       },
     });
 
-    return goalsCreatedUpToWeek.map(goal => {
-      const completionCount = goalCompletionCounts.find(gc => gc.goalId === goal.id)?._count.id || 0;
+    // Retornar mensagem se não houver metas cadastradas
+    if (goalsCreatedUpToWeek.length === 0) {
+      return { message: 'Nenhuma meta cadastrada.' };
+    }
+
+    const goalCompletionCounts =
+      await this.prismaService.goalCompletion.groupBy({
+        by: ['goalId'],
+        where: {
+          goal: {
+            userId: req.sub.sub,
+          },
+          createdAt: {
+            gte: firstDayOfWeek,
+            lte: lastDayOfWeek,
+          },
+        },
+        _count: {
+          id: true,
+        },
+      });
+
+    return goalsCreatedUpToWeek.map((goal) => {
+      const completionCount =
+        goalCompletionCounts.find((gc) => gc.goalId === goal.id)?._count.id ||
+        0;
       return {
         id: goal.id,
         title: goal.title,
@@ -83,28 +90,31 @@ export class GoalService {
         createdAt: true,
       },
       orderBy: {
-        id: 'asc'
-      }
-    });
-
-    const goalCompletionCounts = await this.prismaService.goalCompletion.groupBy({
-      by: ['goalId'],
-      where: {
-        goal: {
-          userId: req.sub.sub,
-        },
-        createdAt: {
-          gte: firstDayOfWeek,
-          lte: lastDayOfWeek,
-        },
-      },
-      _count: {
-        id: true,
+        id: 'asc',
       },
     });
 
-    return goalsCreatedUpToWeek.map(goal => {
-      const completionCount = goalCompletionCounts.find(gc => gc.goalId === goal.id)?._count.id || 0;
+    const goalCompletionCounts =
+      await this.prismaService.goalCompletion.groupBy({
+        by: ['goalId'],
+        where: {
+          goal: {
+            userId: req.sub.sub,
+          },
+          createdAt: {
+            gte: firstDayOfWeek,
+            lte: lastDayOfWeek,
+          },
+        },
+        _count: {
+          id: true,
+        },
+      });
+
+    return goalsCreatedUpToWeek.map((goal) => {
+      const completionCount =
+        goalCompletionCounts.find((gc) => gc.goalId === goal.id)?._count.id ||
+        0;
       return {
         id: goal.id,
         title: goal.title,
@@ -113,5 +123,4 @@ export class GoalService {
       };
     });
   }
-
 }

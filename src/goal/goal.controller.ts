@@ -3,7 +3,7 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { CreateGoalDto } from './dto/create-goal.dto';
 import { GoalService } from './goal.service';
 
-@Controller('goal')
+@Controller('goals')
 export class GoalController {
   constructor(private readonly goalService: GoalService) { }
 
